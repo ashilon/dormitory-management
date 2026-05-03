@@ -66,6 +66,9 @@ dotnet run
 # Swagger UI: http://localhost:5000/swagger
 ```
 
+ערך החיבור נמצא תחת:
+`Database:ConnectionString`
+
 ### 3. Frontend
 פתח את `Frontend/index.html` דרך VS Code Live Server (פורט 5500)
 או כל Web Server מקומי אחר.

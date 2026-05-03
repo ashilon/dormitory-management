@@ -1,4 +1,5 @@
 using Serilog;
+using DormitoryManagement.API.Configuration;
 using DormitoryManagement.API.Data;
 using DormitoryManagement.API.Middleware;
 using DormitoryManagement.API.Services;
@@ -18,6 +19,14 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Host.UseSerilog();
+
+    builder.Services
+        .AddOptions<DatabaseOptions>()
+        .Bind(builder.Configuration.GetSection(DatabaseOptions.SectionName))
+        .ValidateDataAnnotations()
+        .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString),
+            "Database:ConnectionString is required.")
+        .ValidateOnStart();
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
