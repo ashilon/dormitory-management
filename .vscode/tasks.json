@@ -1,0 +1,51 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Backend API",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--urls",
+        "http://localhost:5000"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/Backend/DormitoryManagement.API"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Frontend Server",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/start-frontend-server.ps1"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Full App (Backend + Frontend)",
+      "dependsOn": [
+        "Run Backend API",
+        "Run Frontend Server"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "Stop Full App",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "Get-Process dotnet -ErrorAction SilentlyContinue | Stop-Process -Force; Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'Backend and Frontend servers stopped.'"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
