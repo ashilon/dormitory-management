@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" ng-app="dormitoryApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול פנימיות</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+<div ng-controller="MainController as vm" class="container">
+
+    <!-- ── Header ────────────────────────────────────────────────── -->
+    <header>
+        <h1>מערכת ניהול פנימיות — המינהל לחינוך התיישבותי</h1>
+    </header>
+
+    <!-- ── Error Banner ──────────────────────────────────────────── -->
+    <!--
+        Displayed when the server is unreachable (network error, 500, 503, etc.)
+        The user gets a clear Hebrew message and a retry button.
+    -->
+    <div class="error-banner" ng-show="vm.error">
+        <span class="error-icon">⚠</span>
+        <span ng-bind="vm.error"></span>
+        <button class="btn-retry" ng-click="vm.loadDormitories()">נסה שוב</button>
+    </div>
+
+    <!-- ── Loading Indicator ─────────────────────────────────────── -->
+    <div class="loading-spinner" ng-show="vm.isLoading">
+        <div class="spinner"></div>
+        <p>טוען נתונים...</p>
+    </div>
+
+    <!-- ── Search + AutoComplete ─────────────────────────────────── -->
+    <!--
+        Client-side filtering only — no API call on every keystroke.
+        Suggestions are derived from the unique cities already in memory.
+        async/await is used in the controller for all API interactions.
+    -->
+    <div class="search-container" ng-hide="vm.isLoading || vm.error">
+        <div class="autocomplete-wrapper">
+            <input
+                type="text"
+                class="search-input"
+                placeholder="חפש לפי שם עיר..."
+                ng-model="vm.searchCity"
+                ng-change="vm.onSearchChange()"
+                ng-focus="vm.showSuggestions = true"
+                autocomplete="off"
+                aria-label="חיפוש לפי עיר"
+            />
+            <button
+                class="clear-btn"
+                ng-show="vm.searchCity"
+                ng-click="vm.clearSearch()"
+                aria-label="נקה חיפוש">✕</button>
+
+            <ul class="suggestions-list"
+                ng-show="vm.showSuggestions && vm.suggestions.length > 0"
+                role="listbox">
+                <li
+                    ng-repeat="city in vm.suggestions track by $index"
+                    ng-click="vm.selectCity(city)"
+                    ng-bind="city"
+                    role="option">
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ── Dormitories Table ──────────────────────────────────────── -->
+    <div class="table-container" ng-hide="vm.isLoading || vm.error">
+        <p class="no-results"
+           ng-show="vm.filteredDormitories.length === 0 && !vm.isLoading">
+            לא נמצאו פנימיות עבור "<span ng-bind="vm.searchCity"></span>"
+        </p>
+
+        <table class="dormitory-table"
+               ng-show="vm.filteredDormitories.length > 0"
+               aria-label="רשימת פנימיות">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>שם פנימייה</th>
+                    <th>עיר</th>
+                    <th>תלמידים פעילים</th>
+                    <th>גיל ממוצע</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="place in vm.filteredDormitories track by place.id">
+                    <td ng-bind="place.id"></td>
+                    <td ng-bind="place.name"></td>
+                    <td ng-bind="place.city"></td>
+                    <td ng-bind="place.activeStudentCount"></td>
+                    <td ng-bind="place.averageAge | number:1"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div><!-- /.container -->
+
+<!-- AngularJS 1.8.3 from CDN -->
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+
+<!-- Application scripts (order matters) -->
+<script src="app/app.module.js"></script>
+<script src="app/services/dormitoryService.js"></script>
+<script src="app/controllers/mainController.js"></script>
+
+</body>
+</html>

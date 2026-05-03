@@ -1,0 +1,22 @@
+# .gitignore for Dormitory Management — C# / AngularJS
+
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+logs/
+*.log
+
+## Secrets / Config overrides
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+## Node / npm (if a package.json is added later)
+node_modules/
+
+## OS
+.DS_Store
+Thumbs.db
