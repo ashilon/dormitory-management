@@ -98,3 +98,83 @@ Micro-frontend מוסיף מורכבות תשתיתית משמעותית (Module
 5. הפניית כל ה-DNS ל-Cloud Run. ביטול On-Premise gracefully.
 
 כך בכל שלב יש נקודת rollback ברורה ואין השבתה מתוכננת של המערכת למשתמשי הקצה.
+
+---
+
+## חלק ג' — שאלות בונוס נוספות
+
+### שאלה 4: AI Agent / LLM לשאילתות בשפה טבעית
+
+**ארכיטקטורה:**
+
+אטמיע **RAG (Retrieval-Augmented Generation) + Intent Classifier** pattern:
+
+1. **Intent Classification** — כשמנהל מקליד "כמה תלמידים בכיתה י' השתנתה דרגת הזכאות?", אני משתמש בקטן, מהיר LLM (או Regex pattern + heuristics) לסיווג ה-intent:
+   - `FILTER_BY_CLASS` → `WHERE grade = 10`
+   - `AGGREGATE_CHANGES` → `COUNT DISTINCT students WHERE previous_eligibility != current_eligibility`
+
+2. **Security Layer — Row-Level Security (RLS)** — כל שאילתה שנוצרת חייבת לעבור validation:
+   - Only return fields relevant to the querying user's role (פקיד מינהל לא רואה שכר מורים)
+   - SQL injection prevention — כל query generator משתמש ב-Parameterized Queries
+   - Audit log כל הפניה LLM → generated SQL
+
+3. **Information Retrieval (RAG)** — שמרתי metadata של schema:
+   ```
+   "Student table": {columns: ["Id", "Name", "Age", "EducationPlaceId", "IsActive"],
+                     description: "תלמיד משויך לפנימייה"}
+   ```
+   LLM לא מחדש SQL מסלול; הוא בוחר מREST endpoints שכבר exist ומנוהלים:
+   ```
+   GET /api/students/{id}
+   GET /api/education-places
+   POST /api/reports/student-eligibility-changes
+   ```
+
+4. **Response Safety** — Sensitive data masking:
+   - ID Numbers מוסתרות (תצוגה: `xxx456*`)
+   - Age של תלמידים זוכים הוסתר מפקידים שלא בתפקיד מתאים
+
+**פרקטיקות:**
+
+- Host LLM locally (Llama 2, Mistral) בגודל קטן או דחוף ל-Hugging Face Inference API — מנטרל חשש "OpenAI מחזיקה את הנתונים"
+- Implement request signing (HMAC) כדי להוכיח שה-API call בא מ-trusted source
+- Log כל query LLM וכל SQL response בסביבה אוטומטית — חקירה דיוקית בעת בעיות
+
+---
+
+### שאלה 6: Low-Code vs Custom Code — שיקול עסקי וטכני
+
+**מטריצת ההחלטה:**
+
+| שיקול | Low-Code (OutSystems) | Custom Code (C# + Angular) |
+|------|----------------------|---------------------------|
+| **זמן TTM** | 2-4 שבועות | 8-12 שבועות |
+| **עלות פיתוח ראשונית** | גבוהה (ליסנס + training) | נמוכה (dev time בלבד) |
+| **שלטון בארכיטקטורה** | חלקי — platform lock-in | מלא |
+| **Scalability** | מנוהל — תלוי בחברה | בידי הצוות — unlimited |
+| **טיפול עצמאי לטווח ארוך** | תלות בחברת OutSystems | עצמאות מלאה |
+| **Performance tuning** | מוגבל — black box | כامל |
+
+**החלטה עסקית:**
+
+**בחר Low-Code אם:**
+- צוות מצטער בהנדסה (1-2 מפתחים בלבד) וצריך MVP תוך שבועות
+- דרישות בעלי עסק משתנות כל חודש — agility חשובה יותר מ-optimization
+- רוצים להימנע מ-technical debt ממיר כלים בעתיד
+- Infrastructure management (DevOps, סקלינג) בעיה — בחר SaaS platform managed
+
+**בחר Custom Code אם:**
+- צוות מפתחים חזק ויציב (5+ אנשים) שמרוצים מהסטק
+- כל שנייה של latency כבר משפיעה על UX קריטית
+- צריך integration עמוק עם systems ישנים (legacy ERP, mainframe)
+- תקציב לטווח ארוך להשקעה בפלטפורמה משלך
+- חוקים רגולטוריים מחייבים control מלא (health data, fintech)
+
+**Hybrid approach (המלצה עבור תרחיש כלליי):**
+
+גם OutSystems וגם Custom Code עובדים יחד:
+1. OutSystems למודולי "data entry" שהם boring (forms, dashboards) — מהר וזול
+2. Custom Code בC# למודולים עם לוגיקה עסקית מורכבת (integrity checks, compliance)
+3. API integration between both — REST contracts ברורים
+
+זה הניסיון הטוב ביותר של שתי עולמות: מהירות בקצרון + שליטה בטווח ארוך.
