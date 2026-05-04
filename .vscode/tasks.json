@@ -11,7 +11,10 @@
         "http://localhost:5000"
       ],
       "options": {
-        "cwd": "${workspaceFolder}/Backend/DormitoryManagement.API"
+        "cwd": "${workspaceFolder}/Backend/DormitoryManagement.API",
+        "env": {
+          "ASPNETCORE_ENVIRONMENT": "Development"
+        }
       },
       "isBackground": true,
       "problemMatcher": []

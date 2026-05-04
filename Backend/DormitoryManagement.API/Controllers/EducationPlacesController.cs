@@ -5,7 +5,7 @@ using DormitoryManagement.API.Services;
 namespace DormitoryManagement.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/education-places")]
 public class EducationPlacesController : ControllerBase
 {
     private readonly IEducationPlaceService             _service;
